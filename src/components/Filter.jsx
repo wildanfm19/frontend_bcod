@@ -19,14 +19,7 @@ import {
   useSearchParams
 } from "react-router-dom";
 
-const Filter = () => {
-  const categories = [
-    { categoryId: 1, categoryName: "Electronics" },
-    { categoryId: 2, categoryName: "Clothing" },
-    { categoryId: 3, categoryName: "Books" },
-    { categoryId: 4, categoryName: "Toys" }
-  ];
-
+const Filter = (categories) => {
   const [searchParams] = useSearchParams();
   const params = new URLSearchParams(searchParams);
   const pathname = useLocation().pathname;
