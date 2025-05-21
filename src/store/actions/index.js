@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import api from "../../api/api"
 
 export const fetchProducts = (queryString) => async (dispatch) => {
@@ -114,4 +115,22 @@ export const decreaseCartQuantity =
     dispatch({type: "REMOVE_CART", payload: data });
     toast.success(`${data.productName} removed from cart`);
     localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
+}
+
+export const authenticateSignInUser 
+= (sendData , toast ,reset , navigate , setLoader) => async (dispatch) => {
+    try {
+        setLoader(true);
+        const {data} = await api.post("/auth/signin",sendData);
+        dispatch({type: "LOGIN_USER" , payload:data});
+        localStorage.setItem("auth",JSON.stringify(data));
+        reset()
+        toast.success("Login Success");
+        navigate("/");
+    } catch (error) {
+        console.log(error);
+        toast.error(error.response.data.message || "Internal SErver Error");
+    } finally{
+        setLoader(false);
+    }
 }

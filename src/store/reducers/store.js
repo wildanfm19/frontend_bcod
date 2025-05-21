@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { productReducer } from "./ProductReducers";
 import { errorReducer } from "./errorReducer";
 import { cartReducer } from "./cartReducers";
-import { authReducer } from "./authReducer.js";
+import { authReducer } from "./authReducer";
 
 const user = localStorage.getItem("auth")
     ? JSON.parse(localStorage.getItem("cartItems")) 
