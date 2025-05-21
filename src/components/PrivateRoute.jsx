@@ -11,3 +11,5 @@ const PrivateRoute = ({publicPage = false}) => {
     
   
 }
+
+export default PrivateRoute;
