@@ -1,4 +1,4 @@
-import { bannerImageOne } from "./constant";
+import { bannerImageOne, bannerImageTwo ,bannerImageThree} from "./constant";
 
 export const bannerLists = [
     {
@@ -10,16 +10,16 @@ export const bannerLists = [
   },
   {
     id: 2,
-    image: "https://embarkx.com/sample/placeholder.png",
-    title: "Entertainment Hub",
-    subtitle: "Smart TV",
-    description: "Experience the latest in home entertainment",
+    image: bannerImageTwo,
+    title: "Sepatu Hits",
+    subtitle: "Nike Airmax 97'",
+    description: "Cari sepatu favoritmu disini",
   },
   {
     id: 3,
-    image: "https://embarkx.com/sample/placeholder.png",
-    title: "Playful Picks",
-    subtitle: "Kids' Clothing",
-    description: "Bright and fun styles for kids, up to 20% off",
+    image: bannerImageThree,
+    title: "Komik Bekas",
+    subtitle: "Konan edisi 19",
+    description: "Yang suka detektif bisa dibelii nih!",
 }
 ]
