@@ -122,6 +122,7 @@ export const decreaseCartQuantity =
         const { data } = await api.post("/auth/signin", sendData);
         dispatch({ type: "LOGIN_USER", payload: data });
         localStorage.setItem("auth", JSON.stringify(data));
+        localStorage.setItem('jwtToken', data.jwtToken); 
         reset();
         toast.success("Login Success");
         navigate("/");
@@ -156,4 +157,50 @@ export const logOutUser = (navigate) => (dispatch) => {
     localStorage.removeItem("auth");
     navigate("/login");
 }
+
+export const getProfile = () => async (dispatch) => {
+  try {
+    dispatch({ type: "IS_FETCHING_PROFILE" });
+
+    const { data } = await api.get("/auth/user", {
+      withCredentials: true,
+    });
+
+    dispatch({ type: "GET_PROFILE", payload: data });
+  } catch (error) {
+    dispatch({
+      type: "PROFILE_ERROR",
+      payload: error?.response?.data?.message || "Failed to fetch profile",
+    });
+  }
+};
+
+
+export const addProduct = (productData, categoryId, imageFile, toast, navigate) => async (dispatch) => {
+    try {
+        // 1. First create the product
+        const { data } = await api.post(`/admin/categories/${categoryId}/product`, productData);
+        
+        const productId = data.productId;
+        toast.success("Product added successfully");
+
+        // 2. Then upload the image if it exists
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append("image", imageFile);
+
+            await api.put(`/products/${productId}/image`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            toast.success("Image uploaded successfully");
+        }
+
+        navigate("/admin/products");
+    } catch (error) {
+        console.error(error);
+        toast.error(error?.response?.data?.message || "Failed to add product");
+    }
+};
+
 

@@ -122,7 +122,7 @@ const Filter = ({categories}) => {
             color="primary"
             className="flex items-center gap-2 h-10"
           >
-            Sort By
+            Sort By Price
             {sortOrder === "asc" ? (
               <FiArrowUp size={20} />
             ) : (

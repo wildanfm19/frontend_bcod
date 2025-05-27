@@ -3,7 +3,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { Avatar } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
-import { BiUser } from "react-icons/bi";
+import { BiStoreAlt, BiUser } from "react-icons/bi";
 import { useDispatch, useSelector } from 'react-redux';
 import { FaShoppingCart } from 'react-icons/fa';
 import { IoExitOutline } from "react-icons/io5";
@@ -60,7 +60,17 @@ const UserMenu = () => {
              </MenuItem>
         </Link>
 
-         <Link to="/profile/orders">
+         <Link to="/store">
+             <MenuItem className='flex gap-2' 
+             onClick={handleClose}>
+                <BiStoreAlt className ='text-xl'/>
+                <span className='font-bold text-[16px] mt-1'>
+                  Store
+                </span>
+             </MenuItem>
+        </Link>
+
+         <Link to="/profile/order">
              <MenuItem className='flex gap-2' 
              onClick={handleClose}>
                 <FaShoppingCart className ='text-xl'/>
