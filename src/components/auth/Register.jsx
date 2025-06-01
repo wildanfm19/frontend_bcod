@@ -23,8 +23,8 @@ const Register = () => {
     });
 
     const registerHandler = async (data) =>{
-       dispatch(registerNewUser(data,toast,reset,navigate , setLoader));
-      
+      console.log("Register payload:", data);
+      dispatch(registerNewUser(data,toast,reset,navigate , setLoader));
     };
 
     
@@ -44,12 +44,23 @@ const Register = () => {
                 <h2 className="mt-2 mb-5 text-black "/>
                 <div className="flex flex-col gap-3">
                     <InputField
-                        label="UserName"
+                        label="Username"
                         required
                         id="username"
                         type="text"
-                        message="*UserName is required"
+                        message="Username is required"
                         placeholder="Enter your username"
+                        register={register}
+                        errors={errors}
+                    />
+
+                    <InputField
+                        label="Full Name"
+                        required
+                        id="full_name"
+                        type="text"
+                        message="Full Name is required"
+                        placeholder="Enter your full name"
                         register={register}
                         errors={errors}
                     />
@@ -59,7 +70,7 @@ const Register = () => {
                         required
                         id="email"
                         type="email"
-                        message="*Email is required"
+                        message="Email is required"
                         placeholder="Enter your Email"
                         register={register}
                         errors={errors}
@@ -71,46 +82,78 @@ const Register = () => {
                         id="password"
                         min={6}
                         type="password"
-                        message="*Password is required"
+                        message="Password is required"
                         placeholder="Enter your password"
                         register={register}
                         errors={errors}
                     />
 
                     <InputField
-                        label="Nim"
+                        label="NIM"
                         required
                         id="nim"
                         min={10}
+                        max={10}
                         type="text"
-                        message="*NIM is required"
-                        placeholder="Enter your NIM"
+                        message="NIM is required & must be 10 digits"
+                        placeholder="Enter your NIM (10 digits)"
                         register={register}
                         errors={errors}
+                        validation={{
+                          required: "NIM is required",
+                          minLength: { value: 10, message: "NIM must be 10 digits" },
+                          maxLength: { value: 10, message: "NIM must be 10 digits" },
+                          pattern: { value: /^\d{10}$/, message: "NIM must be 10 digits (numbers only)" }
+                        }}
                     />
 
                     <InputField
-                        label="Jurusan"
+                        label="Major"
                         required
                         id="jurusan"
                         min={6}
                         type="text"
-                        message="*Jurusan is required"
-                        placeholder="Enter your Jurusan"
+                        message="Major is required"
+                        placeholder="Enter your Major"
                         register={register}
                         errors={errors}
                     />
 
                     <InputField
-                        label="Phone"
+                        label="Phone Number"
                         required
-                        id="phone"
-                        min={6}
+                        id="phone_number"
+                        min={11}
+                        max={14}
                         type="text"
-                        message="*Phone Number is required"
-                        placeholder="Enter your phone number"
+                        message="Phone Number is required & must start with 62 and be 11-14 digits"
+                        placeholder="Example: 628123456789"
                         register={register}
                         errors={errors}
+                        validation={{
+                          required: "Phone Number is required",
+                          minLength: { value: 11, message: "Phone number must be at least 11 digits" },
+                          maxLength: { value: 14, message: "Phone number must be at most 14 digits" },
+                          pattern: {
+                            value: /^62[0-9]{9,12}$/,
+                            message: "Phone number must start with 62 followed by 9-12 digits"
+                          }
+                        }}
+                    />
+
+                    <InputField
+                        label="Password Reset Key"
+                        required
+                        id="reset_key"
+                        type="text"
+                        message="Password Reset Key is required & must be at least 6 characters"
+                        placeholder="Enter your password reset key"
+                        register={register}
+                        errors={errors}
+                        validation={{
+                          required: "Password Reset Key is required",
+                          minLength: { value: 6, message: "Password Reset Key must be at least 6 characters" }
+                        }}
                     />
 
                     
@@ -118,14 +161,15 @@ const Register = () => {
 
                 <button
                     disabled={loader}
-                    className="bg-button-gradient flex gap-2 items-center justify-center font-semibold text-white w-full py-2 hover:text-slate-400 transition-colors duration-100 rounded-sm my-3"
+                    className={`bg-gray-800 text-white hover:bg-gray-900 active:bg-gray-700 flex gap-2 items-center justify-center font-semibold w-full py-2 transition-all duration-150 rounded-sm my-3 ${ 
+                      loader ? 'bg-gray-700 cursor-not-allowed' : ''
+                    }`}
                     type="submit">
                     {loader ? (
                         <>Loading...</>
                     ) : (
                         <>Register</>
                     )}
-                    
                 </button>
 
                 <p className="text-center text-sm text-slate-700 mt-6">
