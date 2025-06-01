@@ -1,185 +1,365 @@
 import { useEffect, useState } from "react";
-import {
-  Button,
-  TextField,
-  Typography,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
-  Box,
-} from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { fetchCategories } from "../../store/actions";
 import api from "../../api/api";
+import Loader from "../shared/Loader";
+import { FaExclamationTriangle } from "react-icons/fa";
+import Paginations from "../shared/Paginations";
+import { Link, useSearchParams } from "react-router-dom";
+import { FiEdit, FiTrash2 } from "react-icons/fi";
+import { fetchCategories } from "../../store/actions";
+import AddProductModal from './AddProductModal';
+import EditProductModal from './EditProductModal';
+import toast from 'react-hot-toast';
 
-const UploadProductForm = () => {
+const SellerProductsPage = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { categories } = useSelector((state) => state.products);
+  const [sellerProducts, setSellerProducts] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState(null);
 
-  const [formData, setFormData] = useState({
-    productName: "",
-    description: "",
-    price: "",
-    discount: "0",
-    categoryId: "2", // Default to category 2 as per your endpoint
-    image: null,
-  });
+  const { categories } = useSelector((state) => state.categories);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category_id") || "");
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get("is_active") || "");
+
+  const currentPage = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState(null);
+
+  const [sortBy, setSortBy] = useState("");
+
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+  const handleOpenEditModal = (product) => {
+    setEditProduct(product);
+    setIsEditModalOpen(true);
+  };
+  const handleCloseEditModal = () => {
+    setEditProduct(null);
+    setIsEditModalOpen(false);
+  };
+
+  const fetchSellerProducts = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("User not authenticated.");
+        setIsLoading(false);
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.set("page", currentPage.toString());
+      if (searchTerm) params.set("search", searchTerm);
+      if (selectedCategory) params.set("category_id", selectedCategory);
+      if (selectedStatus) params.set("is_active", selectedStatus);
+
+      const queryString = params.toString();
+
+      const { data } = await api.get(`/seller/products?${queryString}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (data.code === "000" && data.status === "success" && data.data) {
+        setSellerProducts(data.data.data);
+        setPagination({
+          currentPage: data.data.current_page,
+          lastPage: data.data.last_page,
+          total: data.data.total,
+          perPage: data.data.per_page,
+        });
+      } else {
+        setError(data.message || "Failed to fetch seller products.");
+        setSellerProducts([]);
+        setPagination(null);
+      }
+    } catch (error) {
+      console.error("Error fetching seller products:", error);
+      setError(error?.response?.data?.message || "Failed to fetch seller products.");
+      setSellerProducts([]);
+      setPagination(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    dispatch(fetchCategories());
-  }, [dispatch]);
+    fetchSellerProducts();
+    // eslint-disable-next-line
+  }, [currentPage, searchTerm, selectedCategory, selectedStatus]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleProductAdded = () => {
+    setSearchParams({});
+    fetchSellerProducts(); // Refresh data setelah tambah produk
   };
 
-  const handleImageChange = (e) => {
-    setFormData(prev => ({ ...prev, image: e.target.files[0] }));
-  };
-
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-
-  try {
-    // 1. Prepare product data (without image first)
-    const productData = {
-      productName: formData.productName,
-      description: formData.description,
-      price: parseFloat(formData.price),
-      discount: parseFloat(formData.discount || 0), // default to 0 if empty
-    };
-
-    // 2. Send product data to create the product
-    const response = await api.post(
-      `/admin/categories/${formData.categoryId}/product`,
-      productData
-    );
-
-    // 3. If there's an image, upload it separately
-    if (formData.image) {
-      const imageFormData = new FormData();
-      imageFormData.append('image', formData.image);
-      
-      await api.put(
-        `/products/${response.data.productId}/image`,
-        imageFormData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+  useEffect(() => {
+    if (!categories || categories.length === 0) {
+      setLoadingCategories(true);
+      dispatch(fetchCategories()).finally(() => setLoadingCategories(false));
     }
+  }, [dispatch, categories]);
 
-    toast.success('Product created successfully!');
-    navigate('/admin/products');
-  } catch (error) {
-    console.error('Error creating product:', error);
-    toast.error(error.response?.data?.message || 'Failed to create product');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    const newParams = new URLSearchParams(searchParams);
+    if (value) newParams.set("search", value);
+    else newParams.delete("search");
+    newParams.set("page", "1");
+    setSearchParams(newParams);
+  };
+
+  const handleCategoryChange = (event) => {
+    const value = event.target.value;
+    setSelectedCategory(value);
+    const newParams = new URLSearchParams(searchParams);
+    if (value) newParams.set("category_id", value);
+    else newParams.delete("category_id");
+    newParams.set("page", "1");
+    setSearchParams(newParams);
+  };
+
+  const handleStatusChange = (event) => {
+    const value = event.target.value;
+    setSelectedStatus(value);
+    const newParams = new URLSearchParams(searchParams);
+    if (value) newParams.set("is_active", value);
+    else newParams.delete("is_active");
+    newParams.set("page", "1");
+    setSearchParams(newParams);
+  };
+
+  const handlePageChange = (page) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", page.toString());
+    setSearchParams(newParams);
+  };
+
+  const formatPrice = (price) => {
+    return `Rp ${price?.toLocaleString('id-ID')}`;
+  };
+
+  // Sorting logic (frontend)
+  const getSortedProducts = (products) => {
+    if (!products) return [];
+    let sorted = [...products];
+    if (sortBy === "name_az") {
+      sorted.sort((a, b) => a.product_name.localeCompare(b.product_name));
+    } else if (sortBy === "name_za") {
+      sorted.sort((a, b) => b.product_name.localeCompare(a.product_name));
+    } else if (sortBy === "price_low") {
+      sorted.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (sortBy === "price_high") {
+      sorted.sort((a, b) => Number(b.price) - Number(a.price));
+    } else if (sortBy === "stock_high") {
+      sorted.sort((a, b) => Number(b.stock_quantity) - Number(a.stock_quantity));
+    }
+    return sorted;
+  };
+
+  const handleProductEdited = () => {
+    setSearchParams({});
+    fetchSellerProducts();
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('User not authenticated.');
+        return;
+      }
+      const { data } = await api.delete(`/seller/products/${productId}/force`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.code === '000') {
+        toast.success('Product deleted successfully!');
+        fetchSellerProducts();
+      } else {
+        toast.error(data.message || 'Failed to delete product.');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error(error?.response?.data?.message || 'Failed to delete product.');
+    }
+  };
 
   return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit}
-      sx={{
-        maxWidth: 500,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        mt: 4,
-      }}
-    >
-      <Typography variant="h5" textAlign="center" fontWeight="bold">
-        Upload Product
-      </Typography>
+    <div className="lg:px-14 sm:px-8 px-4 py-10 2xl:w-[90%] 2xl:mx-auto">
+      <h1 className="text-2xl font-semibold mb-6">My Products</h1>
 
-      <TextField
-        label="Product Name"
-        name="productName"
-        value={formData.productName}
-        onChange={handleChange}
-        fullWidth
-        required
-      />
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <div className="flex items-center border rounded-lg overflow-hidden w-full sm:w-auto flex-grow">
+          <input
+            type="text"
+            placeholder="Search Products"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="px-4 py-2 w-full outline-none"
+          />
+          <button type="button" className="px-4 py-2 bg-gray-100 hover:bg-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </div>
 
-      <TextField
-        label="Description"
-        name="description"
-        value={formData.description}
-        onChange={handleChange}
-        fullWidth
-        multiline
-        rows={4}
-        required
-      />
-
-      <TextField
-        label="Price"
-        name="price"
-        type="number"
-        value={formData.price}
-        onChange={handleChange}
-        fullWidth
-        required
-        inputProps={{ step: "0.01" }}
-      />
-
-      <TextField
-        label="Discount (%)"
-        name="discount"
-        type="number"
-        value={formData.discount}
-        onChange={handleChange}
-        fullWidth
-        inputProps={{ min: 0, max: 100 }}
-      />
-
-      <FormControl fullWidth>
-        <InputLabel>Category</InputLabel>
-        <Select
-          name="categoryId"
-          value={formData.categoryId}
-          onChange={handleChange}
-          label="Category"
-          disabled // Disabled since we're hardcoding to category 2
+        <select
+          className="border rounded-lg px-4 py-2 outline-none w-full sm:w-auto"
+          value={selectedCategory}
+          onChange={handleCategoryChange}
+          disabled={loadingCategories || isLoading}
         >
-          <MenuItem value="2">Category 2</MenuItem>
-        </Select>
-      </FormControl>
+          <option value="">All Categories</option>
+          {categories && categories.map(category => (
+            <option key={category.category_id} value={category.category_id}>{category.category_name}</option>
+          ))}
+        </select>
 
-      <Button variant="outlined" component="label">
-        Upload Image
-        <input
-          type="file"
-          name="image"
-          hidden
-          accept="image/*"
-          onChange={handleImageChange}
-        />
-      </Button>
+        <select
+          className="border rounded-lg px-4 py-2 outline-none w-full sm:w-auto"
+          value={selectedStatus}
+          onChange={handleStatusChange}
+          disabled={isLoading}
+        >
+          <option value="">All Status</option>
+          <option value="true">Available</option>
+          <option value="false">Not Available</option>
+        </select>
 
-      <Button 
-        type="submit" 
-        variant="contained" 
-        color="primary"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? "Submitting..." : "Submit Product"}
-      </Button>
-    </Box>
+        {/* Dropdown Sort */}
+        <select
+          className="border rounded-lg px-4 py-2 outline-none w-full sm:w-auto"
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value)}
+        >
+          <option value="">Sort</option>
+          <option value="name_az">Name A-Z</option>
+          <option value="name_za">Name Z-A</option>
+          <option value="price_low">Lowest Price</option>
+          <option value="price_high">Highest Price</option>
+          <option value="stock_high">Most Stock</option>
+        </select>
+
+        <button 
+          className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 active:bg-gray-700 transition duration-200 w-full sm:w-auto"
+          onClick={handleOpenModal}
+          disabled={isLoading}
+        >
+          Add Product
+        </button>
+
+        {/* Link to Received Orders */}
+        <Link 
+          to="/store/received-orders"
+          className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 active:bg-gray-700 transition duration-200 w-full sm:w-auto text-center"
+        >
+          Received Orders
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <Loader />
+      ) : error ? (
+        <div className="flex justify-center items-center h-[200px] w-full text-center">
+          <FaExclamationTriangle className="text-red-500 text-3xl mr-2" />
+          <span className="text-red-500 text-lg font-medium">{error}</span>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          {sellerProducts && getSortedProducts(sellerProducts).length > 0 ? (
+            <table className="min-w-full bg-white rounded-lg shadow overflow-hidden">
+              <thead className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                <tr>
+                  <th className="py-3 px-6 text-left">No.</th>
+                  <th className="py-3 px-6 text-left">Nama Produk</th>
+                  <th className="py-3 px-6 text-left">Foto</th>
+                  <th className="py-3 px-6 text-left">Kategori</th>
+                  <th className="py-3 px-6 text-left">Persediaan</th>
+                  <th className="py-3 px-6 text-left">Harga Jual</th>
+                  <th className="py-3 px-6 text-left">Status</th>
+                  <th className="py-3 px-6 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-600 text-sm font-light">
+                {getSortedProducts(sellerProducts).map((product, index) => (
+                  <tr key={product.product_id} className="border-b border-gray-200 hover:bg-gray-100">
+                    <td className="py-3 px-6 text-left whitespace-nowrap">{(pagination?.currentPage - 1) * (pagination?.perPage || 0) + index + 1}</td>
+                    <td className="py-3 px-6 text-left">{product.product_name}</td>
+                    <td className="py-3 px-6 text-left">
+                      {product.main_image?.image_url ? (
+                        <img src={product.main_image.image_url} alt={product.product_name} className="w-12 h-12 object-cover rounded" />
+                      ) : (
+                        <span>No Image</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-6 text-left">{product.category?.category_name || 'N/A'}</td>
+                    <td className="py-3 px-6 text-left">{product.stock_quantity}</td>
+                    <td className="py-3 px-6 text-left">{formatPrice(product.price)}</td>
+                    <td className="py-3 px-6 text-left">
+                      <span className={`py-1 px-3 rounded-full text-xs ${
+                        (product.is_active && product.stock_quantity > 0) ? 'bg-green-200 text-green-600' : 'bg-red-200 text-red-600'
+                      }`}>
+                        {(product.is_active && product.stock_quantity > 0) ? 'Available' : 'Not Available'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-6 text-center">
+                      <div className="flex item-center justify-center">
+                        <Link to="#" className="w-6 mr-2 transform hover:text-purple-500 hover:scale-110" onClick={() => handleOpenEditModal(product)}>
+                          <FiEdit size={18}/>
+                        </Link>
+                        <button className="w-6 mr-2 transform hover:text-red-500 hover:scale-110" onClick={() => handleDeleteProduct(product.product_id)}>
+                          <FiTrash2 size={18}/>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center text-gray-600 min-h-[500px] flex items-center justify-center">No products found for this seller.</div>
+          )}
+        </div>
+      )}
+
+      {pagination && sellerProducts && sellerProducts.length > 0 && (
+        <div className="flex justify-center pt-10">
+          <Paginations
+            numberOfPage={pagination.lastPage}
+            totalPoducts={pagination.total}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
+
+      <AddProductModal 
+        open={isModalOpen} 
+        handleClose={handleCloseModal} 
+        onProductAdded={handleProductAdded} 
+      />
+      <EditProductModal
+        open={isEditModalOpen}
+        handleClose={handleCloseEditModal}
+        onProductEdited={handleProductEdited}
+        product={editProduct}
+        categories={categories}
+      />
+    </div>
   );
 };
 
-export default UploadProductForm;
+export default SellerProductsPage;

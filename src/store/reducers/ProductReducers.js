@@ -1,36 +1,30 @@
 const initialState = {
     products: null,
-    categories: [] ,
-    pagination: {},
+    categories: [],
+    pagination: {
+        currentPage: 1,
+        perPage: 12,
+        total: 0,
+        lastPage: 1,
+        from: 1,
+        to: 1,
+        links: []
+    }
 };
 
-export const productReducer = ( state= initialState , action) => {
+export const productReducer = (state = initialState, action) => {
     switch (action.type) {
         case "FETCH_PRODUCTS":
-            return{
+            return {
                 ...state,
                 products: action.payload,
-                pagination: {
-                    pageNumber: action.pageNumber,
-                    pageSize: action.pageSize,
-                    totalElements: action.totalElements,
-                    totalPages: action.totalPages,
-                    lastPage: action.lastPage
-                }
+                pagination: action.pagination
             };
 
              case "FETCH_CATEGORIES":
-            return{
+            return {
                 ...state,
-                  categories: action.payload,
-                   pagination: {
-                    pageNumber: action.pageNumber,
-                    pageSize: action.pageSize,
-                    totalElements: action.totalElements,
-                    totalPages: action.totalPages,
-                    lastPage: action.lastPage
-                }
-                   
+                categories: action.payload
             };
 
         default:

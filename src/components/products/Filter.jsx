@@ -19,7 +19,7 @@ import {
   useSearchParams
 } from "react-router-dom";
 
-const Filter = ({categories}) => {
+const Filter = ({ categories }) => {
   const [searchParams] = useSearchParams();
   const params = new URLSearchParams(searchParams);
   const pathname = useLocation().pathname;
@@ -107,8 +107,8 @@ const Filter = ({categories}) => {
           >
             <MenuItem value="all">All</MenuItem>
             {categories.map((item) => (
-              <MenuItem key={item.categoryId} value={item.categoryName}>
-                {item.categoryName}
+              <MenuItem key={item.category_id} value={item.category_name}>
+                {item.category_name}
               </MenuItem>
             ))}
           </Select>
