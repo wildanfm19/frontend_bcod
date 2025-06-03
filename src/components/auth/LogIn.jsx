@@ -8,6 +8,7 @@ import { authenticateSignInUser } from "../../store/actions";
 import toast from "react-hot-toast";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, TextField, CircularProgress } from '@mui/material';
 import { FaCopy } from 'react-icons/fa';
+import { logo } from "../../utils/constant";
 
 const LogIn = () => {
     const navigate = useNavigate();
@@ -143,7 +144,10 @@ const LogIn = () => {
                 onSubmit={handleSubmit(loginHandler)}
                 className="sm:w[450px] w-[360px] shadow-custom py-8 sm:px-8 px-4 rounded">
                 <div className="flex flex-col items-center justify-center space-y-4">
-                    <AiOutlineLogin className="text-slate-800 text-5xl" />
+                   <img
+                     className="text-slate-800 text-5xl" 
+                     src={logo}
+                   />
                     <h1 className="text-slate-800 text-center font-montserrat lg:text-3xl text-2xl font-bold">
                         Login Here
                     </h1>

@@ -22,6 +22,7 @@ import Checkout from './components/checkout/Checkout';
 import PlacedOrders from './components/OrderDetails/PlacedOrders';
 import ReceivedOrders from './components/OrderDetails/ReceivedOrders';
 import OrderDetailPage from './components/OrderDetails/OrderDetailPage';
+import Layout from './components/shared/Layout';
 
 function AppRoutes() {
   const dispatch = useDispatch();
@@ -44,7 +45,7 @@ function AppRoutes() {
 
   return (
     <>
-      <Navbar/>
+      <Layout>
       <Routes>
         {/* Public routes */}
         <Route path='/login' element={<LogIn/>}/>
@@ -64,6 +65,7 @@ function AppRoutes() {
           <Route path='/order-details' element={<OrderDetailPage/>}/>
         </Route>
       </Routes>
+      </Layout>
       <Toaster position='bottom-center'/>
     </>
   );
