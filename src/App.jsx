@@ -22,6 +22,7 @@ import Checkout from './components/checkout/Checkout';
 import PlacedOrders from './components/OrderDetails/PlacedOrders';
 import ReceivedOrders from './components/OrderDetails/ReceivedOrders';
 import OrderDetailPage from './components/OrderDetails/OrderDetailPage';
+import Footer from './components/shared/Footer';
 
 function AppRoutes() {
   const dispatch = useDispatch();
@@ -64,6 +65,7 @@ function AppRoutes() {
           <Route path='/order-details' element={<OrderDetailPage/>}/>
         </Route>
       </Routes>
+       <Footer/>
       <Toaster position='bottom-center'/>
     </>
   );

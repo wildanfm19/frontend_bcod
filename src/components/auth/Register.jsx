@@ -33,9 +33,12 @@ const Register = () => {
         <div className="min-h-[calc(100vh-64px)] flex justify-center items-center">
             <form
                 onSubmit={handleSubmit(registerHandler)}
-                className="sm:w[450px] w-[360px] shadow-custom py-8 sm:px-8 px-4 rounded">
+                className="sm:w[450px] w-[360px] shadow-custom py-8 sm:px-8 px-4 rounded m-10">
                     <div className="flex flex-col items-center justify-center space-y-4">
-                        <FaUserPlus className = "text-slate-800 text-5xl"/>
+                        <img
+                             className="text-slate-800 text-5xl" 
+                             src={logo}
+                        />
                         <h1 className="text-slate-800 text-center font-montserrat lg:text-3xl text-2xl font-bold">
                             Register Here
                         </h1>
