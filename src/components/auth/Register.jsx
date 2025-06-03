@@ -6,6 +6,7 @@ import InputField from '../shared/InputField';
 import { useDispatch } from 'react-redux';
 import { registerNewUser } from '../../store/actions';
 import toast from 'react-hot-toast';
+import { logo } from "../../utils/constant";
 
 const Register = () => {
 
