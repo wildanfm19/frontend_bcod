@@ -2,7 +2,8 @@ import { aboutUsImage } from "../utils/constant";
 
 const About = () => {
     return (
-        <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+            <div className="max-w-7xl mx-auto px-4 py-16">
             <h1 className="text-slate-800 text-4xl font-extrabold text-center mb-12 underline underline-offset-4">
                 About Us
             </h1>
@@ -35,6 +36,8 @@ const About = () => {
                 </div>
             </div>
         </div>
+        </div>
+        
     );
 };
 

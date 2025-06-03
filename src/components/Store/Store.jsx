@@ -57,11 +57,15 @@ const SellerProductsPage = () => {
         return;
       }
 
-      const params = new URLSearchParams();
-      params.set("page", currentPage.toString());
+      const params = new URLSearchParams(searchParams);
       if (searchTerm) params.set("search", searchTerm);
       if (selectedCategory) params.set("category_id", selectedCategory);
-      if (selectedStatus) params.set("is_active", selectedStatus);
+      if (selectedStatus === 'true') {
+        params.set("status", 'active');
+      } else if (selectedStatus === 'false') {
+        params.set("status", 'inactive');
+      }
+      params.delete("is_active");
 
       const queryString = params.toString();
 
@@ -97,7 +101,7 @@ const SellerProductsPage = () => {
   useEffect(() => {
     fetchSellerProducts();
     // eslint-disable-next-line
-  }, [currentPage, searchTerm, selectedCategory, selectedStatus]);
+  }, [searchParams]);
 
   const handleProductAdded = () => {
     setSearchParams({});
@@ -125,18 +129,29 @@ const SellerProductsPage = () => {
     const value = event.target.value;
     setSelectedCategory(value);
     const newParams = new URLSearchParams(searchParams);
-    if (value) newParams.set("category_id", value);
-    else newParams.delete("category_id");
+    if (value) {
+        newParams.set("category_id", value);
+    } else {
+        newParams.delete("category_id"); // Reset category filter
+    }
     newParams.set("page", "1");
     setSearchParams(newParams);
   };
 
   const handleStatusChange = (event) => {
-    const value = event.target.value;
+    const value = event.target.value; // value will be 'true', 'false', or ''
     setSelectedStatus(value);
     const newParams = new URLSearchParams(searchParams);
-    if (value) newParams.set("is_active", value);
-    else newParams.delete("is_active");
+    // Map frontend value to backend parameter name and value
+    if (value === 'true') {
+      newParams.set("status", "active");
+    } else if (value === 'false') {
+      newParams.set("status", "inactive");
+    } else { // When value is empty string (All Status)
+      newParams.delete("status"); // Correctly remove status param for reset
+    }
+    // Also remove the old is_active param if it exists
+    newParams.delete("is_active");
     newParams.set("page", "1");
     setSearchParams(newParams);
   };

@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import api from '../../api/api';
 
 const lokasiOptions = [
-  { value: 'kantin payung', label: 'Kantin Payung' },
+  { value: 'Kantin payung', label: 'Kantin Payung' },
   { value: 'LKC', label: 'LKC' },
   { value: 'Depan Admisi', label: 'Depan Admisi' },
 ];
@@ -21,7 +21,7 @@ const jamOptions = Array.from({ length: 8 }, (_, i) => {
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const [lokasi, setLokasi] = useState('kantin payung');
+  const [lokasi, setLokasi] = useState('Kantin payung');
   const [tanggal, setTanggal] = useState(() => new Date().toISOString().slice(0, 10));
   const [jam, setJam] = useState('10:00');
   const [loading, setLoading] = useState(false);
