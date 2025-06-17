@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography, Divider, Paper, Grid, Select, MenuItem, FormControl, InputLabel, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { FaExclamationTriangle, FaArrowLeft, FaWhatsapp, FaUser, FaShoppingBag, FaCalendarAlt, FaMapMarkerAlt } from 'react-icons/fa';
 import { formatPrice } from '../../utils/formatPrice';
@@ -20,7 +20,7 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     // Log the error to an error reporting service
-    console.error("Uncaught error in OrderDetailPage:", error, errorInfo);
+    console.error("Uncaught error in OrderHistoryDetailPage:", error, errorInfo);
     this.setState({ error, errorInfo });
   }
 
@@ -48,9 +48,9 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const OrderDetailPage = () => {
-  const location = useLocation();
+const OrderHistoryDetailPage = () => {
   const navigate = useNavigate();
+  const { orderId } = useParams(); // Get orderId from URL parameters
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -59,13 +59,13 @@ const OrderDetailPage = () => {
   const [isLoadingOrder, setIsLoadingOrder] = useState(true); // Add loading state for initial fetch
 
   // Get order ID from location state or URL params if necessary
-  const orderId = location.state?.order?.order_id; // Get orderId from state initially
+  // const orderId = location.state?.order?.order_id; // Removed - now using useParams()
 
   // Fetch order details from API on component mount or if orderId changes
   useEffect(() => {
     const fetchOrderDetail = async () => {
       if (!orderId) {
-        setError('Order ID not provided.');
+        setError('Order ID not provided in URL.'); // Updated error message
         setIsLoadingOrder(false);
         return;
       }
@@ -80,7 +80,7 @@ const OrderDetailPage = () => {
         }
 
         // Fetch order details using orderId
-        const { data } = await api.get(`/seller/received-orders/${orderId}`, { // Use the correct endpoint
+        const { data } = await api.get(`/seller/orders/${orderId}`, { // Use the correct endpoint for Order History
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -116,115 +116,12 @@ const OrderDetailPage = () => {
     }
   };
 
-  const handleStatusChange = async (newStatus) => {
-    if (!order || isUpdating) return;
+  // Order History does not have these update status functions
+  // const handleStatusChange = async (newStatus) => { ... };
+  // const updateOrderStatus = async (newStatus) => { ... };
+  // const handleConfirmStatusChange = () => { ... };
+  // const handleStatusAccChange = async (newStatusAcc) => { ... };
 
-    // Check if status_acc is 'acc' before allowing status change
-    if (order.status_acc !== 'acc') {
-      toast.error('Please accept the order first (change status ACC to "Acc") before updating the status');
-      return;
-    }
-
-    // If changing to success, show confirmation dialog
-    if (newStatus === 'success') {
-      setPendingStatus(newStatus);
-      setShowConfirmDialog(true);
-      return;
-    }
-
-    await updateOrderStatus(newStatus);
-  };
-
-  const updateOrderStatus = async (newStatus) => {
-    setIsUpdating(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('User not authenticated');
-        return;
-      }
-
-      const { data } = await api.put(
-        `/seller/orders/${order.order_id}/status`,
-        { status: newStatus },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      if (data.code === '000') {
-        setOrder(prev => ({ ...prev, status: newStatus }));
-        toast.success('Order status updated successfully');
-      } else {
-        toast.error(data.message || 'Failed to update order status');
-      }
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      if (error?.response?.data?.code === '422') {
-        if (error?.response?.data?.message?.includes('must be accepted')) {
-          toast.error('Please accept the order first (change status ACC to "Acc") before updating the status');
-        } else if (error?.response?.data?.message?.includes('successful order')) {
-          toast.error('Cannot change status of a successful order');
-        } else {
-          toast.error(error?.response?.data?.message || 'Failed to update order status');
-        }
-      } else {
-        toast.error(error?.response?.data?.message || 'Failed to update order status');
-      }
-    } finally {
-      setIsUpdating(false);
-      setShowConfirmDialog(false);
-      setPendingStatus(null);
-    }
-  };
-
-  const handleConfirmStatusChange = () => {
-    if (pendingStatus) {
-      updateOrderStatus(pendingStatus);
-    }
-  };
-
-  const handleStatusAccChange = async (newStatusAcc) => {
-    if (!order || isUpdating) return;
-    
-    setIsUpdating(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('User not authenticated');
-        setIsUpdating(false); // Stop loading if not authenticated
-        return;
-      }
-
-      // Update the status_acc via API
-      const { data } = await api.put(
-        `/seller/orders/${order.order_id}/status-acc`,
-        { status_acc: newStatusAcc },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      if (data.code === '000' && data.data) { // Check for data existence in response
-        // Update local state with the new status_acc AND the status from the API response
-        setOrder(prev => ({
-            ...prev,
-            status_acc: data.data.status_acc, // Use status_acc from response
-            status: data.data.status         // Use status from response
-        }));
-        toast.success(data.message || 'Order status ACC updated successfully');
-
-      } else {
-        // Handle API error response where status is not 'success' or code is not '000'
-        toast.error(data.message || 'Failed to update order status ACC');
-      }
-    } catch (error) {
-      console.error('Error updating order status ACC:', error);
-      toast.error(error?.response?.data?.message || 'Failed to update order status ACC');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
 
   if (error) {
     return (
@@ -239,12 +136,10 @@ const OrderDetailPage = () => {
     return <Loader />;
   }
 
-  const isReceivedOrder = order.customer ? true : false; // Determine order type
-  const customerOrSeller = isReceivedOrder ? order.customer : order.seller;
-  const customerOrSellerLabel = isReceivedOrder ? 'Customer' : 'Seller';
-  const customerOrSellerName = isReceivedOrder
-    ? customerOrSeller?.username || customerOrSeller?.full_name || customerOrSeller?.store_name || customerOrSeller?.phone_number || 'N/A'
-    : customerOrSeller?.full_name || customerOrSeller?.store_name || customerOrSeller?.phone_number || 'N/A'; // Use full_name for seller
+  // For Order History, the other party is the seller, not the customer
+  const customerOrSeller = order.seller; // In Order History, we are the buyer, the other party is the seller
+  const customerOrSellerLabel = 'Seller'; // Translated Text
+  const customerOrSellerName = customerOrSeller?.full_name || customerOrSeller?.store_name || customerOrSeller?.phone_number || 'N/A'; // Use full_name or store_name for seller
 
   const getStatusColorClass = (status) => {
     switch (status) {
@@ -257,6 +152,7 @@ const OrderDetailPage = () => {
     }
   };
 
+  // Status ACC is specific to received orders (seller view), remove or adjust if needed for buyer view
   const getStatusAccColorClass = (statusAcc) => {
     switch (statusAcc) {
       case 'sudah di acc': return 'bg-green-200 text-green-800';
@@ -311,15 +207,15 @@ const OrderDetailPage = () => {
                       <Typography className="text-gray-700 font-medium">Location:</Typography> {/* Translated Text */}
                       <Typography className="text-gray-700">{order.lokasi || 'N/A'}</Typography>
                     </div>
-                    {order.whatsapp_link && (
+                    {order.whatsapp_link && ( // Keep whatsapp link if present in API response
                       <div className="flex items-center gap-3">
                         <FaWhatsapp className="text-gray-400" />
                         <div>
                           <Typography className="text-sm text-gray-500">WhatsApp</Typography> {/* Translated Text */}
-                          <a 
-                            href={order.whatsapp_link} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
+                          <a
+                            href={order.whatsapp_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 font-semibold"
                           >
                             Contact {/* Translated Text */}
@@ -340,17 +236,17 @@ const OrderDetailPage = () => {
                   <div className="space-y-4">
                     {order.order_items.map((item, index) => (
                       <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="w-24 h-30 flex-shrink-0">
+                        <div className="w-24 h-24 flex-shrink-0"> {/* Adjusted height */}
                           {item.galleries?.[0]?.image_url ? (
-                            <img 
-                              src={item.galleries[0].image_url} 
-                              alt={item.product_name} 
+                            <img
+                              src={item.galleries[0].image_url}
+                              alt={item.product_name}
                               className="w-full h-full object-cover rounded-lg"
                             />
                           ) : item.image_url ? (
-                            <img 
-                              src={item.image_url} 
-                              alt={item.product_name} 
+                            <img
+                              src={item.image_url}
+                              alt={item.product_name}
                               className="w-full h-full object-cover rounded-lg"
                             />
                           ) : (
@@ -361,7 +257,7 @@ const OrderDetailPage = () => {
                         </div>
                         <div className="flex-grow flex flex-col justify-center">
                           <Typography className="font-semibold text-gray-800">{item.product_name || 'N/A'}</Typography>
-                          <div className="mt-7 space-y-1">
+                          <div className="mt-2 space-y-1"> {/* Adjusted margin */}
                             <Typography className="text-sm text-gray-800">
                               Quantity: {item.quantity}
                             </Typography>
@@ -377,52 +273,14 @@ const OrderDetailPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <Typography className="text-gray-500">No items found for this order.</Typography> 
+                  <Typography className="text-gray-500">No items found for this order.</Typography>
                 )}
               </Paper>
             </div>
 
             {/* Side Information */}
             <div className="space-y-6">
-              {/* Status Updates */}
-              {isReceivedOrder && (
-                <Paper elevation={0} className="p-6 bg-white rounded-xl shadow-sm">
-                  <Typography variant="h6" className="font-semibold h-14 text-gray-800">
-                    Update Status
-                  </Typography>
-                  <div className="space-y-4">
-                    <FormControl fullWidth>
-                      <InputLabel>Order Status</InputLabel>
-                      <Select
-                        value={order.status}
-                        label="Order Status"
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        disabled={isUpdating}
-                        className="bg-gray-50"
-                      >
-                        <MenuItem value="pending">Pending</MenuItem>
-                        <MenuItem value="success">Success</MenuItem>
-                        <MenuItem value="cancel">Cancel</MenuItem>
-                      </Select>
-                    </FormControl>
-                    <FormControl fullWidth>
-                      <InputLabel>Status ACC</InputLabel>
-                      <Select
-                        value={order.status_acc || 'belum di acc'}
-                        label="Status ACC"
-                        onChange={(e) => handleStatusAccChange(e.target.value)}
-                        disabled={isUpdating}
-                        className="bg-gray-50"
-                      >
-                        <MenuItem value="acc">Acc</MenuItem>
-                        <MenuItem value="belum di acc">Belum di Acc</MenuItem>
-                        <MenuItem value="di tolak">Di Tolak</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </div>
-                </Paper>
-              )}
-
+              {/* Status Updates - REMOVED for Order History */} 
               {/* Customer/Seller Information */}
               <Paper elevation={0} className="p-6 bg-white rounded-xl shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
@@ -436,45 +294,59 @@ const OrderDetailPage = () => {
                     <Typography className="text-sm text-gray-500">Name/Store</Typography>
                     <Typography className="font-semibold">{customerOrSellerName}</Typography>
                   </div>
-                  {isReceivedOrder && order.customer?.email && (
-                    <div>
-                      <Typography className="text-sm text-gray-500">Email</Typography>
-                      <Typography className="font-semibold">{order.customer.email}</Typography>
-                    </div>
-                  )}
-                  {isReceivedOrder && order.customer?.phone_number && (
+                  {/* In Order History, the other party is the seller, so show seller's phone */}
+                  {customerOrSeller?.phone_number && (
                     <div>
                       <Typography className="text-sm text-gray-500">Phone</Typography>
                       <a
-                        href={`https://wa.me/${order.customer.phone_number.replace(/[^0-9]/g, '')}`}
+                        href={`https://wa.me/${customerOrSeller.phone_number.replace(/[^0-9]/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 font-semibold"
                       >
-                        {order.customer.phone_number}
+                        {customerOrSeller.phone_number}
                       </a>
                     </div>
                   )}
-                  {!isReceivedOrder && order.seller?.phone_number && (
-                    <div>
-                      <Typography className="text-sm text-gray-500">Seller Phone</Typography>
-                      <a 
-                        href={`https://wa.me/${order.seller.phone_number.replace(/[^0-9]/g, '')}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 font-semibold"
-                      >
-                        {order.seller.phone_number}
-                      </a>
-                    </div>
-                  )}
+                  {/* Email might not be available for seller in this endpoint, keep if needed */}
+                  {customerOrSeller?.email && (
+                     <div>
+                       <Typography className="text-sm text-gray-500">Email</Typography>
+                       <Typography className="font-semibold">{customerOrSeller.email}</Typography>
+                     </div>
+                   )}
                 </div>
               </Paper>
+
+              {/* Display Order Status */}
+                <Paper elevation={0} className="p-6 bg-white rounded-xl shadow-sm">
+                  <Typography variant="h6" className="font-semibold mb-4 text-gray-800">Order Status</Typography>
+                  <div className="space-y-3">
+                      <div>
+                          <Typography className="text-sm text-gray-500">Status</Typography>
+                          <Typography className={`font-semibold px-2 py-1 rounded-full inline-block ${getStatusColorClass(order.status)}`}>
+                              {order.status}
+                          </Typography>
+                      </div>
+                      {/* Removed Status ACC display for buyer view */}
+                      {/*
+                       <div>
+                          <Typography className="text-sm text-gray-500">Status ACC</Typography>
+                          <Typography className={`font-semibold px-2 py-1 rounded-full inline-block ${getStatusAccColorClass(order.status_acc)}`}>
+                              {order.status_acc || 'No info'}
+                          </Typography>
+                      </div>
+                      */}
+                  </div>
+              </Paper>
+
+
             </div>
           </div>
         </div>
 
-        {/* Add Confirmation Dialog */}
+        {/* Remove Confirmation Dialog as status updates are removed */}
+        {/*
         <Dialog
           open={showConfirmDialog}
           onClose={() => setShowConfirmDialog(false)}
@@ -520,9 +392,10 @@ const OrderDetailPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
+        */}
       </div>
     </ErrorBoundary>
   );
 };
 
-export default OrderDetailPage;
+export default OrderHistoryDetailPage;

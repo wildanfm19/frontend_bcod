@@ -21,8 +21,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Checkout from './components/checkout/Checkout';
 import PlacedOrders from './components/OrderDetails/PlacedOrders';
 import ReceivedOrders from './components/OrderDetails/ReceivedOrders';
-import OrderDetailPage from './components/OrderDetails/OrderDetailPage';
+import OrderDetailPage from './components/OrderDetails/OrderDetailPage'; // For Received Order Details (Seller View)
+import OrderHistoryDetailPage from './components/OrderDetails/OrderHistoryDetailPage'; // For Order History Details (Buyer View)
+import Footer from './components/shared/Footer';
 import Layout from './components/shared/Layout';
+
 
 function AppRoutes() {
   const dispatch = useDispatch();
@@ -62,7 +65,10 @@ function AppRoutes() {
           <Route path='/profile/order' element={<PlacedOrders/>}/>
           <Route path='/store' element={<Store/>}/>
           <Route path='/store/received-orders' element={<ReceivedOrders/>}/>
+          {/* Route for Received Order Details (Seller View) */}
           <Route path='/order-details' element={<OrderDetailPage/>}/>
+          {/* Route for Order History Details (Buyer View) */}
+          <Route path='/profile/order/:orderId' element={<OrderHistoryDetailPage/>}/>
         </Route>
       </Routes>
       </Layout>
