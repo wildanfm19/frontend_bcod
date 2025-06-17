@@ -94,7 +94,8 @@ const PlacedOrders = () => {
 
   // New handler to navigate to detail page
   const handleViewDetails = (order) => {
-    navigate('/order-details', { state: { order } });
+    // Navigate to the new Order History detail route with the order ID
+    navigate(`/profile/order/${order.order_id}`);
   };
 
   return (
@@ -191,4 +192,4 @@ const PlacedOrders = () => {
   );
 };
 
-export default PlacedOrders; 
+export default PlacedOrders;

@@ -210,4 +210,4 @@ const ReceivedOrders = () => {
   );
 };
 
-export default ReceivedOrders; 
+export default ReceivedOrders;
